@@ -1,7 +1,10 @@
 # py-ebay
 This is some sample code of a wrapper to talk to Ebay.  It uses the ebay-sdk and there are some IPython notebooks sample code.
 
-## Note
+## Notes
+I installed using conda create rather than the instructions in ebay-sdk so I had
+to install by hand lxml (by downloading from compiled sources) and ez-setup.   
+
 You have to create a ebay.yaml file in the root directory.  I have been bad and just used the production for my testing as I am listing 
 my own products.  So my file looks like this:
 
