@@ -1,5 +1,8 @@
 # py-ebay
-This is some sample code of a wrapper to talk to Ebay.  It uses the ebay-sdk and there are some IPython notebooks sample code.
+This is some sample code of a wrapper to talk to Ebay.  It uses the 
+ebay-sdk from here https://github.com/timotheus/ebaysdk-python and 
+there are some IPython notebooks sample code.   
+If you find it useful drop me a line at www.drummonds.net
 
 ## Notes
 I installed using conda create rather than the instructions in ebay-sdk so I had

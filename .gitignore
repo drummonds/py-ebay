@@ -18,5 +18,15 @@ Management*.xlsx
 # Ignore .env configuration files
 .env
 
-# Ignore ebay configuration files
+# Ignore py_ebay configuration files
 ebay.yaml
+
+# Temp IPython notebook
+.ipynb_checkpoints
+
+# This is a place I store all my files while using the code
+playpen
+
+# Temporary files used for installation.
+installation
+
