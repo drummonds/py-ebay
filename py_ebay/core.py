@@ -29,7 +29,7 @@ class Ebay:
         # These are the fields for the dataframe.  At the moment this is smaller subset of data
         # Note that to get some of this data you may need to do multiple calls eg EAN
         self.ebay_fields = ['ItemID', 'Title', 'Quantity', 'HitCount', 'BuyItNowPrice',
-                            'Description', 'SKU', 'MPN', 'EAN', 'ReturnPolicy']
+                            'Description', 'SKU', 'MPN', 'EAN', 'ReturnPolicy', 'ListingStatus']
 
     def trading(self, call, data={}):
         response = self.api.execute(call, data)
@@ -72,7 +72,16 @@ class Ebay:
                 print(e.response.dict())
         return result
 
+    def active(self, item_dictionary):
+        """ Given an Item dictionary """
+        try:
+            result = item_dictionary['SellingStatus']['ListingStatus'] == 'Active'
+        except:
+            result = False
+        return result
+
     def fill_page(self, page_number=1, entries_per_page=5, print_first=False):
+        """This is only go to fill active items"""
         try:
             now = dt.datetime.now()
             listData = {
@@ -92,28 +101,33 @@ class Ebay:
                     print('Page number {}'.format(page_number))
                     print('{}'.format(response.dict()))
                     print_first = False
-                for f in self.ebay_fields:
-                    try:
-                        if f == 'EAN':
-                            self.df.loc[index][f] = d['ReturnPolicy'][f]
-                        else:
-                            self.df.loc[index][f] = d[f]
-                    except KeyError:  # some fields may be absent eg if no hitcounter is setup then there will be no
-                        # hitcount
-                        pass
-                    except TypeError:  # Probably due to SKU but not sure exact problem
-                        pass
-                index += 1
+                if self.active(d):
+                    for f in self.ebay_fields:
+                        try:
+                            if f == 'EAN':
+                                self.df.loc[self.high_index][f] = d['ReturnPolicy'][f]
+                            elif f == 'ListingStatus':
+                                self.df.loc[self.high_index][f] = d['SellingStatus'][f]
+                            else:
+                                self.df.loc[self.high_index][f] = d[f]
+                        except KeyError:  # some fields may be absent eg if no hitcounter is setup then there will be no
+                            # hitcount
+                            pass
+                        except TypeError:  # Probably due to SKU but not sure exact problem
+                            pass
+                    self.high_index += 1
         except ConnectionError as e:
             print(listData)
             print(e)
             print(e.response.dict())
+            print('\n')
 
     def fill_pages(self):
         num_pages = (self.count + 4) / 5
+        self.high_index = 0
         for page_number in range(num_pages):
             if page_number == 1:
-                self.fill_page(page_number + 1, True)
+                self.fill_page(page_number + 1) #  , print_first=True)
             else:
                 self.fill_page(page_number + 1)
 
@@ -122,17 +136,20 @@ class Ebay:
         index = range(self.count)
         self.df = pd.DataFrame(index=index, columns=self.ebay_fields)
         self.fill_pages()
+        # Not all the listings may be active so get rid of the ones that are not.
+        self.df = self.df.iloc[:self.high_index]
         print('Add EAN')
         self.add_EAN()
         return self.df
 
-    def add_EAN(self):
+    def add_EAN(self, get_even_if_sku = True):
         """This addes EAN data to each item.  Note with a large catalogue this may produce
         a single API call for every item.  So the maxiumum number of API calls could be
-        exceeded."""
+        exceeded. By setting get_even_if_sku False and using the SKU data as in an index you
+        can reduce the number of calls."""
         for i, row_tuple in enumerate(self.df.iterrows()):
             row = row_tuple[1]
-            if is_nan(row['SKU']):  # See if we can find an EAN/MPN to enrich the data
+            if is_nan(row['SKU']) or get_even_if_sku:  # See if we can find an EAN/MPN to enrich the data
                 if is_nan(row['EAN']):
                     EAN, MPN = self.get_EAN(row['ItemID'])
                     if EAN != '':
@@ -150,6 +167,7 @@ class Ebay:
             elif name_value_dict['Name'] == 'MPN':
                 NonLocal.MPN = name_value_dict['Value']
         try:
+            assert item_id != 'nan', TypeError
             listData = {
                 'ItemID': '{}'.format(item_id),
                 'IncludeItemSpecifics': True,
@@ -174,3 +192,23 @@ class Ebay:
                 print('No response dict')
         return NonLocal.EAN, NonLocal.MPN
 
+    def set_sku(self, item, sku):
+        try:
+            listData = {
+                'Item' : {
+                    'ItemID': '{}'.format(item),
+                    'SKU': '{}'.format(sku)
+                }
+            }
+            response = self.trading('ReviseItem', listData)
+        except ConnectionError as e:
+            print(listData)
+            print(e)
+            try:
+                print(e.response.dict())
+            except AttributeError:
+                print('No response dict')
+
+    @property
+    def version(self):
+        return '0.2'
