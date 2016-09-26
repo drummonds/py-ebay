@@ -27,6 +27,9 @@ ebay.yaml
 # This is a place I store all my files while using the code
 playpen
 
+# This is a place I store all my baby inventory application
+inventory
+
 # Temporary files used for installation.
 installation
 
