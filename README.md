@@ -15,6 +15,7 @@ my own products.  So my file looks like this:
 name: ebay_api_config
 
 #### Trading API - https://www.x.com/developers/ebay/products/trading-api
+http://developer.ebay.com/Devzone/XML/docs/Reference/eBay/index.html
 api.ebay.com:
     compatability: 719
 	siteid: 3

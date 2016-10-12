@@ -196,8 +196,8 @@ class Ebay:
         try:
             listData = {
                 'Item' : {
-                    'ItemID': '{}'.format(item),
-                    'SKU': '{}'.format(sku)
+                    'ItemID' : '{}'.format(item),
+                    'SKU' : '{}'.format(sku)
                 }
             }
             response = self.trading('ReviseItem', listData)
@@ -209,6 +209,48 @@ class Ebay:
             except AttributeError:
                 print('No response dict')
 
+    def set_MPN(self, item, MPN, brand = 'The Bedding Specialist'):
+        try:
+            listData = {
+                'Item' : {
+                    'ItemID' : '{}'.format(item),
+                    'ItemSpecifics': {
+                        'NameValueList': [
+                            {'name': 'Brand', 'value': '{}'.format(brand)},
+                            {'name': 'MPN',   'value': '{}'.format(MPN)}
+                        ]
+                    }
+                }
+            }
+            response = self.trading('ReviseFixedPriceItem', listData)
+        except ConnectionError as e:
+            print(listData)
+            print(e)
+            try:
+                print(e.response.dict())
+            except AttributeError:
+                print('No response dict')
+
+
     @property
     def version(self):
-        return '0.2'
+        return '0.20'
+
+
+    def set_description(self, item, description):
+        try:
+            listData = {
+                'Item' : {
+                    'ItemID': '{}'.format(item),
+                    'Description': '<![CDATA[{}]]>'.format(description.encode('utf8'))
+                }
+            }
+            response = self.trading('ReviseItem', listData)
+        except ConnectionError as e:
+            print(listData)
+            print(e)
+            try:
+                print(e.response.dict())
+            except AttributeError:
+                print('No response dict')
+
